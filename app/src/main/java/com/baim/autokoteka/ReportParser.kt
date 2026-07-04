@@ -51,6 +51,28 @@ object ReportParser {
         val reason: String = ""
     )
 
+    private fun calculateSimilarity(s1: String, s2: String): Double {
+        if (s1.isEmpty() && s2.isEmpty()) return 100.0
+        if (s1.isEmpty() || s2.isEmpty()) return 0.0
+
+        val costs = IntArray(s2.length + 1)
+        for (j in 0..s2.length) {
+            costs[j] = j
+        }
+        for (i in 1..s1.length) {
+            costs[0] = i
+            var nw = i - 1
+            for (j in 1..s2.length) {
+                val cj = Math.min(1 + Math.min(costs[j], costs[j - 1]), if (s1[i - 1] == s2[j - 1]) nw else nw + 1)
+                nw = costs[j]
+                costs[j] = cj
+            }
+        }
+        val distance = costs[s2.length]
+        val maxLength = Math.max(s1.length, s2.length)
+        return (1.0 - distance.toDouble() / maxLength) * 100
+    }
+
     fun validateReport(data: ParsedData, rawText: String, latestRawText: String): ValidationResult {
         // 1. Validasi Matematika (Apakah penjabaran PK+PS+PB sesuai dengan Total Harian)
         val sum = data.pk + data.ps + data.pb
@@ -61,12 +83,15 @@ object ReportParser {
             )
         }
 
-        // 2. Validasi Duplikat Jangka Panjang
-        if (rawText == latestRawText) {
-            return ValidationResult(
-                isValid = false,
-                reason = "Pesan ini sama persis 100% dengan laporan terakhir yang diproses. Indikasi laporan ganda/di-forward ulang."
-            )
+        // 2. Validasi Pesan Diedit / Kemiripan
+        if (latestRawText.isNotEmpty()) {
+            val similarity = calculateSimilarity(rawText, latestRawText)
+            if (similarity >= 90.0) {
+                return ValidationResult(
+                    isValid = false,
+                    reason = "Laporan ini ${similarity.toInt()}% mirip dengan laporan terakhir. Indikasi pesan diedit atau dikirim ulang."
+                )
+            }
         }
 
         return ValidationResult(isValid = true)

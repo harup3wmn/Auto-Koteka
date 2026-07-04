@@ -165,6 +165,22 @@ class DataStoreManager(private val context: Context) {
         }
     }
 
+    suspend fun subtractAccumulation(amount: Int, isYalimo: Boolean) {
+        context.dataStore.edit { preferences ->
+            if (isYalimo) {
+                val currentBulan = preferences[YALIMO_BULAN_INI] ?: 0
+                val currentTahun = preferences[YALIMO_TAHUN_INI] ?: 0
+                preferences[YALIMO_BULAN_INI] = (currentBulan - amount).coerceAtLeast(0)
+                preferences[YALIMO_TAHUN_INI] = (currentTahun - amount).coerceAtLeast(0)
+            } else {
+                val currentBulan = preferences[WAMENA_BULAN_INI] ?: 21
+                val currentTahun = preferences[WAMENA_TAHUN_INI] ?: 294
+                preferences[WAMENA_BULAN_INI] = (currentBulan - amount).coerceAtLeast(0)
+                preferences[WAMENA_TAHUN_INI] = (currentTahun - amount).coerceAtLeast(0)
+            }
+        }
+    }
+
     suspend fun saveLatestReport(report: String) {
         context.dataStore.edit { preferences ->
             preferences[LATEST_REPORT] = report

@@ -349,43 +349,118 @@ fun LogEntryCard(
 
             if (entry.status == "PENDING") {
                 Spacer(modifier = Modifier.height(16.dp))
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                dataStoreManager.updateLogStatus(entry.id, "REJECTED")
-                                Toast.makeText(context, "Laporan Ditolak", Toast.LENGTH_SHORT).show()
+                if (entry.anomalyReason.contains("mirip", ignoreCase = true)) {
+                    Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        val parsedData = ReportParser.parseMessage(entry.rawText)
+                                        val latestRawText = dataStoreManager.latestRawTextFlow.first()
+                                        val oldParsedData = ReportParser.parseMessage(latestRawText)
+                                        
+                                        if (parsedData != null && oldParsedData != null) {
+                                            dataStoreManager.subtractAccumulation(oldParsedData.tHariIni, oldParsedData.isYalimo)
+                                            dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.isYalimo)
+                                            dataStoreManager.setLatestRawText(entry.rawText)
+                                            
+                                            val wamenaBulan = dataStoreManager.wamenaBulanIniFlow.first()
+                                            val wamenaTahun = dataStoreManager.wamenaTahunIniFlow.first()
+                                            val yalimoBulan = dataStoreManager.yalimoBulanIniFlow.first()
+                                            val yalimoTahun = dataStoreManager.yalimoTahunIniFlow.first()
+                                            
+                                            val finalReport = ReportParser.formatReport(
+                                                parsedData, wamenaBulan, wamenaTahun, yalimoBulan, yalimoTahun
+                                            )
+                                            dataStoreManager.saveLatestReport(finalReport)
+                                        }
+                                        dataStoreManager.updateLogStatus(entry.id, "APPROVED")
+                                        Toast.makeText(context, "Laporan Lama Diganti!", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Ganti Lama", style = MaterialTheme.typography.labelSmall)
                             }
-                        },
-                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-                    ) {
-                        Text("Tolak")
-                    }
-                    
-                    Button(
-                        onClick = {
-                            coroutineScope.launch {
-                                val parsedData = ReportParser.parseMessage(entry.rawText)
-                                if (parsedData != null) {
-                                    dataStoreManager.setLatestRawText(entry.rawText)
-                                    dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.isYalimo)
-                                    
-                                    val wamenaBulan = dataStoreManager.wamenaBulanIniFlow.first()
-                                    val wamenaTahun = dataStoreManager.wamenaTahunIniFlow.first()
-                                    val yalimoBulan = dataStoreManager.yalimoBulanIniFlow.first()
-                                    val yalimoTahun = dataStoreManager.yalimoTahunIniFlow.first()
-                                    
-                                    val finalReport = ReportParser.formatReport(
-                                        parsedData, wamenaBulan, wamenaTahun, yalimoBulan, yalimoTahun
-                                    )
-                                    dataStoreManager.saveLatestReport(finalReport)
-                                }
-                                dataStoreManager.updateLogStatus(entry.id, "APPROVED")
-                                Toast.makeText(context, "Laporan Disetujui!", Toast.LENGTH_SHORT).show()
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        val parsedData = ReportParser.parseMessage(entry.rawText)
+                                        if (parsedData != null) {
+                                            dataStoreManager.setLatestRawText(entry.rawText)
+                                            dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.isYalimo)
+                                            
+                                            val wamenaBulan = dataStoreManager.wamenaBulanIniFlow.first()
+                                            val wamenaTahun = dataStoreManager.wamenaTahunIniFlow.first()
+                                            val yalimoBulan = dataStoreManager.yalimoBulanIniFlow.first()
+                                            val yalimoTahun = dataStoreManager.yalimoTahunIniFlow.first()
+                                            
+                                            val finalReport = ReportParser.formatReport(
+                                                parsedData, wamenaBulan, wamenaTahun, yalimoBulan, yalimoTahun
+                                            )
+                                            dataStoreManager.saveLatestReport(finalReport)
+                                        }
+                                        dataStoreManager.updateLogStatus(entry.id, "APPROVED")
+                                        Toast.makeText(context, "Laporan Baru Ditambahkan!", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                modifier = Modifier.weight(1f)
+                            ) {
+                                Text("Tambahkan Baru", style = MaterialTheme.typography.labelSmall)
                             }
                         }
-                    ) {
-                        Text("Setujui")
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    dataStoreManager.updateLogStatus(entry.id, "REJECTED")
+                                    Toast.makeText(context, "Laporan Ditolak", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text("Tolak / Abaikan")
+                        }
+                    }
+                } else {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    dataStoreManager.updateLogStatus(entry.id, "REJECTED")
+                                    Toast.makeText(context, "Laporan Ditolak", Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text("Tolak")
+                        }
+                        
+                        Button(
+                            onClick = {
+                                coroutineScope.launch {
+                                    val parsedData = ReportParser.parseMessage(entry.rawText)
+                                    if (parsedData != null) {
+                                        dataStoreManager.setLatestRawText(entry.rawText)
+                                        dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.isYalimo)
+                                        
+                                        val wamenaBulan = dataStoreManager.wamenaBulanIniFlow.first()
+                                        val wamenaTahun = dataStoreManager.wamenaTahunIniFlow.first()
+                                        val yalimoBulan = dataStoreManager.yalimoBulanIniFlow.first()
+                                        val yalimoTahun = dataStoreManager.yalimoTahunIniFlow.first()
+                                        
+                                        val finalReport = ReportParser.formatReport(
+                                            parsedData, wamenaBulan, wamenaTahun, yalimoBulan, yalimoTahun
+                                        )
+                                        dataStoreManager.saveLatestReport(finalReport)
+                                    }
+                                    dataStoreManager.updateLogStatus(entry.id, "APPROVED")
+                                    Toast.makeText(context, "Laporan Disetujui!", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        ) {
+                            Text("Setujui")
+                        }
                     }
                 }
             }
