@@ -19,8 +19,7 @@ class NotificationService : NotificationListenerService() {
     private val serviceScope = CoroutineScope(Dispatchers.IO)
 
     companion object {
-        private var lastProcessedText: String = ""
-        private var lastPostTime: Long = 0
+        private val processedPostTimes = mutableSetOf<Long>()
     }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
@@ -36,12 +35,18 @@ class NotificationService : NotificationListenerService() {
             
             val postTime = sbn.postTime
             
-            // Cegah ghost notifications: Jika teks dan waktu postTime persis sama, ini adalah notifikasi hantu dari WhatsApp
-            if (text == lastProcessedText && postTime == lastPostTime) {
+            // Cegah ghost/unread notifications: Cek apakah ID waktu ini sudah pernah diproses
+            if (processedPostTimes.contains(postTime)) {
                 return
             }
-            lastProcessedText = text
-            lastPostTime = postTime
+            
+            processedPostTimes.add(postTime)
+            // Jaga agar memory tidak bengkak (maksimal simpan 50 ID terakhir)
+            if (processedPostTimes.size > 50) {
+                val iterator = processedPostTimes.iterator()
+                iterator.next()
+                iterator.remove()
+            }
 
             Log.d("NotificationService", "Pesan laporan terdeteksi: $text")
             processReport(text)
@@ -95,12 +100,14 @@ class NotificationService : NotificationListenerService() {
                 val wamenaTahun = dataStoreManager.wamenaTahunIniFlow.first()
                 val yalimoBulan = dataStoreManager.yalimoBulanIniFlow.first()
                 val yalimoTahun = dataStoreManager.yalimoTahunIniFlow.first()
+                val targetBulanan = dataStoreManager.targetBulananFlow.first()
 
                 // Buat format report final
                 val finalReport = ReportParser.formatReport(
                     parsedData, 
                     wamenaBulan, wamenaTahun, 
-                    yalimoBulan, yalimoTahun
+                    yalimoBulan, yalimoTahun,
+                    targetBulanan
                 )
                 
                 dataStoreManager.saveLatestReport(finalReport)

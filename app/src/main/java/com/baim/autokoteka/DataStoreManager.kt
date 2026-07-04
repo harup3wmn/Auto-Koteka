@@ -33,6 +33,7 @@ class DataStoreManager(private val context: Context) {
         val YALIMO_TAHUN_INI = intPreferencesKey("yalimo_tahun_ini")
         val LATEST_REPORT = stringPreferencesKey("latest_report")
         
+        val TARGET_BULANAN = intPreferencesKey("target_bulanan")
         val LATEST_RAW_TEXT = stringPreferencesKey("latest_raw_text")
         val LOG_HISTORY = stringPreferencesKey("log_history")
     }
@@ -49,6 +50,10 @@ class DataStoreManager(private val context: Context) {
     }
     val yalimoTahunIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[YALIMO_TAHUN_INI] ?: 0
+    }
+
+    val targetBulananFlow: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[TARGET_BULANAN] ?: 80
     }
 
     val latestReportFlow: Flow<String> = context.dataStore.data.map { preferences ->
@@ -146,6 +151,12 @@ class DataStoreManager(private val context: Context) {
         context.dataStore.edit { preferences ->
             preferences[YALIMO_BULAN_INI] = bulan
             preferences[YALIMO_TAHUN_INI] = tahun
+        }
+    }
+
+    suspend fun updateTargetBulanan(target: Int) {
+        context.dataStore.edit { preferences ->
+            preferences[TARGET_BULANAN] = target
         }
     }
 

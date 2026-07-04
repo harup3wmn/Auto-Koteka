@@ -102,46 +102,45 @@ object ReportParser {
         wamenaBulan: Int, 
         wamenaTahun: Int,
         yalimoBulan: Int,
-        yalimoTahun: Int
+        yalimoTahun: Int,
+        targetBulanan: Int
     ): String {
         
         // UP3 Wamena = Total Gabungan
         val totalUP3Bulan = wamenaBulan + yalimoBulan
         val totalUP3Tahun = wamenaTahun + yalimoTahun
         
-        // Harian UP3 = Hari ini Yalimo ATAU Wamena (karena dilaporkan salah satu)
-        val tHariIniUP3 = data.tHariIni
+        val totalHariIniWamena = if (!data.isYalimo) data.tHariIni else 0
+        val totalHariIniYalimo = if (data.isYalimo) data.tHariIni else 0
+        val totalUP3HariIni = totalHariIniWamena + totalHariIniYalimo
         
-        // Logika tampilan berdasar ULP mana yang update
-        val wamenaHariIni = if (!data.isYalimo) data.tHariIni else 0
-        val wamenaPK = if (!data.isYalimo) data.pk else 0
-        val wamenaPS = if (!data.isYalimo) data.ps else 0
-        val wamenaPB = if (!data.isYalimo) data.pb else 0
-        
-        val yalimoHariIni = if (data.isYalimo) data.tHariIni else 0
-        val yalimoPK = if (data.isYalimo) data.pk else 0
-        val yalimoPS = if (data.isYalimo) data.ps else 0
-        val yalimoPB = if (data.isYalimo) data.pb else 0
+        val targetTahunan = targetBulanan * 12
+        val pctBulan = if (targetBulanan > 0) (totalUP3Bulan.toDouble() / targetBulanan) * 100 else 0.0
+        val pctTahun = if (targetTahunan > 0) (totalUP3Tahun.toDouble() / targetTahunan) * 100 else 0.0
 
         return """
-*Laporan Realisasi Tebang Program KOTEKA 2026 UP3 Wamena*
-Hari / ${data.tanggal}
+            *Laporan KOTEKA UP3 Wamena*
+            📅 Tanggal: ${data.tanggal}
 
-UP3 Wamena : PK ${data.pk} btg / PS ${data.ps} btg / PB ${data.pb} btg / T. Hari ini $tHariIniUP3 btg / T. Bulan Ini $totalUP3Bulan btg / T. s.d. hari ini $totalUP3Tahun btg
+            *Total Pencapaian UP3 Wamena*
+            • Hari ini: $totalUP3HariIni Pohon (PK:${data.pk}, PS:${data.ps}, PB:${data.pb})
+            • Bulan ini: $totalUP3Bulan Pohon
+            • Tahun ini: $totalUP3Tahun Pohon
 
-Perhitungan Realisasi mulai dihitung sejak 1 Januari 2026, semua foto penebangan difoto (1 foto untuk 1 titik)
+            *Target vs Realisasi*
+            🎯 Bulanan: $totalUP3Bulan / $targetBulanan Pohon (${String.format("%.1f", pctBulan)}%)
+            🎯 Tahunan: $totalUP3Tahun / $targetTahunan Pohon (${String.format("%.1f", pctTahun)}%)
 
-1. ULP Wamena Kota : PK $wamenaPK btg / PS $wamenaPS btg / PB $wamenaPB btg / T. Hari ini $wamenaHariIni btg / T. Bulan Ini $wamenaBulan btg / T. s.d. hari ini $wamenaTahun btg
-- PT Nusa Daya : PK $wamenaPK btg / PS $wamenaPS btg / PB $wamenaPB btg / T. Hari ini $wamenaHariIni btg / T. Bulan Ini $wamenaBulan btg / T. s.d. hari ini $wamenaTahun btg
-
-2. ULP Yalimo : PK $yalimoPK btg / PS $yalimoPS btg / PB $yalimoPB btg / T. Hari ini $yalimoHariIni btg / T. Bulan Ini $yalimoBulan btg / T. s.d. hari ini $yalimoTahun btg
-* PT  : PK $yalimoPK btg / PS $yalimoPS btg / PB $yalimoPB btg / T. Hari ini $yalimoHariIni btg / T. Bulan Ini $yalimoBulan btg / T. s.d. hari ini $yalimoTahun btg
-
-Ket : 
-PK : Pohon Kecil
-PS : Pohon Sedang
-PB : Pohon Besar
-T   : Total
-""".trimIndent()
+            *Rincian per ULP*
+            1. Wamena Kota
+               Hari ini: $totalHariIniWamena | Bulan ini: $wamenaBulan | Tahun ini: $wamenaTahun
+            2. Yalimo
+               Hari ini: $totalHariIniYalimo | Bulan ini: $yalimoBulan | Tahun ini: $yalimoTahun
+               
+            Ket :
+            PK : Pohon Kecil
+            PS : Pohon Sedang
+            PB : Pohon Besar
+        """.trimIndent()
     }
 }

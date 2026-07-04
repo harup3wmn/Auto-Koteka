@@ -82,6 +82,7 @@ fun AutoKotekaApp() {
     val wamenaTahun by dataStoreManager.wamenaTahunIniFlow.collectAsState(initial = 294)
     val yalimoBulan by dataStoreManager.yalimoBulanIniFlow.collectAsState(initial = 0)
     val yalimoTahun by dataStoreManager.yalimoTahunIniFlow.collectAsState(initial = 0)
+    val targetBulanan by dataStoreManager.targetBulananFlow.collectAsState(initial = 80)
     
     val latestReport by dataStoreManager.latestReportFlow.collectAsState(initial = "")
     val logHistory by dataStoreManager.logHistoryFlow.collectAsState(initial = emptyList())
@@ -155,6 +156,11 @@ fun AutoKotekaApp() {
                 Text("UP3 Wamena (Total)", fontWeight = FontWeight.Bold)
                 Text("Bulan Ini: ${wamenaBulan + yalimoBulan} | Tahun Ini: ${wamenaTahun + yalimoTahun}")
                 
+                Spacer(modifier = Modifier.height(8.dp))
+                Text("Target", fontWeight = FontWeight.Bold)
+                Text("Bulanan: $targetBulanan | Tahunan: ${targetBulanan * 12}")
+                
+                
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = { showEditDialog = true },
@@ -194,6 +200,7 @@ fun AutoKotekaApp() {
         var editWamenaTahun by remember { mutableStateOf(wamenaTahun.toString()) }
         var editYalimoBulan by remember { mutableStateOf(yalimoBulan.toString()) }
         var editYalimoTahun by remember { mutableStateOf(yalimoTahun.toString()) }
+        var editTargetBulanan by remember { mutableStateOf(targetBulanan.toString()) }
 
         AlertDialog(
             onDismissRequest = { showEditDialog = false },
@@ -229,6 +236,16 @@ fun AutoKotekaApp() {
                         label = { Text("Tahun Ini") },
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    Text("Target", fontWeight = FontWeight.Bold)
+                    OutlinedTextField(
+                        value = editTargetBulanan,
+                        onValueChange = { editTargetBulanan = it },
+                        label = { Text("Target Bulanan (Pohon)") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    )
                 }
             },
             confirmButton = {
@@ -239,9 +256,11 @@ fun AutoKotekaApp() {
                             val wt = editWamenaTahun.toIntOrNull() ?: wamenaTahun
                             val yb = editYalimoBulan.toIntOrNull() ?: yalimoBulan
                             val yt = editYalimoTahun.toIntOrNull() ?: yalimoTahun
+                            val tb = editTargetBulanan.toIntOrNull() ?: targetBulanan
                             
                             dataStoreManager.updateDataWamena(wb, wt)
                             dataStoreManager.updateDataYalimo(yb, yt)
+                            dataStoreManager.updateTargetBulanan(tb)
                             showEditDialog = false
                         }
                     }
@@ -368,9 +387,10 @@ fun LogEntryCard(
                                             val wamenaTahun = dataStoreManager.wamenaTahunIniFlow.first()
                                             val yalimoBulan = dataStoreManager.yalimoBulanIniFlow.first()
                                             val yalimoTahun = dataStoreManager.yalimoTahunIniFlow.first()
+                                            val targetBln = dataStoreManager.targetBulananFlow.first()
                                             
                                             val finalReport = ReportParser.formatReport(
-                                                parsedData, wamenaBulan, wamenaTahun, yalimoBulan, yalimoTahun
+                                                parsedData, wamenaBulan, wamenaTahun, yalimoBulan, yalimoTahun, targetBln
                                             )
                                             dataStoreManager.saveLatestReport(finalReport)
                                         }
@@ -394,9 +414,10 @@ fun LogEntryCard(
                                             val wamenaTahun = dataStoreManager.wamenaTahunIniFlow.first()
                                             val yalimoBulan = dataStoreManager.yalimoBulanIniFlow.first()
                                             val yalimoTahun = dataStoreManager.yalimoTahunIniFlow.first()
+                                            val targetBln = dataStoreManager.targetBulananFlow.first()
                                             
                                             val finalReport = ReportParser.formatReport(
-                                                parsedData, wamenaBulan, wamenaTahun, yalimoBulan, yalimoTahun
+                                                parsedData, wamenaBulan, wamenaTahun, yalimoBulan, yalimoTahun, targetBln
                                             )
                                             dataStoreManager.saveLatestReport(finalReport)
                                         }
@@ -448,9 +469,10 @@ fun LogEntryCard(
                                         val wamenaTahun = dataStoreManager.wamenaTahunIniFlow.first()
                                         val yalimoBulan = dataStoreManager.yalimoBulanIniFlow.first()
                                         val yalimoTahun = dataStoreManager.yalimoTahunIniFlow.first()
+                                        val targetBln = dataStoreManager.targetBulananFlow.first()
                                         
                                         val finalReport = ReportParser.formatReport(
-                                            parsedData, wamenaBulan, wamenaTahun, yalimoBulan, yalimoTahun
+                                            parsedData, wamenaBulan, wamenaTahun, yalimoBulan, yalimoTahun, targetBln
                                         )
                                         dataStoreManager.saveLatestReport(finalReport)
                                     }
