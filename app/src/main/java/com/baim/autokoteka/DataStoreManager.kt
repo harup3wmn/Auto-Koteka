@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.Calendar
 
 import org.json.JSONArray
 import org.json.JSONObject
@@ -36,6 +37,9 @@ class DataStoreManager(private val context: Context) {
         val TARGET_BULANAN = intPreferencesKey("target_bulanan")
         val LATEST_RAW_TEXT = stringPreferencesKey("latest_raw_text")
         val LOG_HISTORY = stringPreferencesKey("log_history")
+        
+        val LAST_SAVED_MONTH = intPreferencesKey("last_saved_month")
+        val LAST_SAVED_YEAR = intPreferencesKey("last_saved_year")
     }
 
     val wamenaBulanIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -162,6 +166,29 @@ class DataStoreManager(private val context: Context) {
 
     suspend fun addAccumulation(amount: Int, isYalimo: Boolean) {
         context.dataStore.edit { preferences ->
+            val calendar = Calendar.getInstance()
+            val currentMonth = calendar.get(Calendar.MONTH)
+            val currentYear = calendar.get(Calendar.YEAR)
+            
+            val lastSavedMonth = preferences[LAST_SAVED_MONTH] ?: currentMonth
+            val lastSavedYear = preferences[LAST_SAVED_YEAR] ?: currentYear
+            
+            // Logika Reset Otomatis
+            if (currentYear > lastSavedYear || (currentYear == lastSavedYear && currentMonth > lastSavedMonth)) {
+                // Reset bulanan
+                preferences[WAMENA_BULAN_INI] = 0
+                preferences[YALIMO_BULAN_INI] = 0
+                
+                // Reset tahunan jika ganti tahun
+                if (currentYear > lastSavedYear) {
+                    preferences[WAMENA_TAHUN_INI] = 0
+                    preferences[YALIMO_TAHUN_INI] = 0
+                }
+            }
+            
+            preferences[LAST_SAVED_MONTH] = currentMonth
+            preferences[LAST_SAVED_YEAR] = currentYear
+
             if (isYalimo) {
                 val currentBulan = preferences[YALIMO_BULAN_INI] ?: 0
                 val currentTahun = preferences[YALIMO_TAHUN_INI] ?: 0
