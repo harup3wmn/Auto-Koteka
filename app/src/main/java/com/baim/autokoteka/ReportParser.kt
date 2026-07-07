@@ -6,9 +6,9 @@ object ReportParser {
 
     private val regexTanggal = Regex("(?i)(?:hari|tanggal|𝙃𝘼𝙍𝙄|𝙏𝘼𝙉𝙂𝙂𝘼𝙇)[^\\n]*?[=:]\\s*([^\\n]+)")
     private val regexTHariIni = Regex("(?i)(?:perolehan|total|jumlah)\\s+penebangan[^\\n]*?[=:]?[ \\t]*(\\d+)")
-    private val regexPK = Regex("(?i)1\\.[^\\n]*?5\\s*-\\s*20[^\\n]*?[=:]?[ \\t]*(\\d+)")
-    private val regexPS = Regex("(?i)2\\.[^\\n]*?20\\s*-\\s*30[^\\n]*?[=:]?[ \\t]*(\\d+)")
-    private val regexPB1 = Regex("(?i)3\\.[^\\n]*?30\\s*-\\s*50[^\\n]*?[=:]?[ \\t]*(\\d+)")
+    private val regexPK = Regex("(?i)(?:1\\.[^\\n]*?5\\s*-\\s*20|pohon\\s+kecil)[^\\n]*?[=:]?[ \\t]*(\\d+)")
+    private val regexPS = Regex("(?i)(?:2\\.[^\\n]*?20\\s*-\\s*30|pohon\\s+sedang)[^\\n]*?[=:]?[ \\t]*(\\d+)")
+    private val regexPB1 = Regex("(?i)(?:3\\.[^\\n]*?30\\s*-\\s*50|pohon\\s+besar)[^\\n]*?[=:]?[ \\t]*(\\d+)")
     private val regexPB2 = Regex("(?i)4\\.[^\\n]*?50\\s*>[^\\n]*?[=:]?[ \\t]*(\\d+)")
 
     data class ParsedData(
@@ -24,22 +24,26 @@ object ReportParser {
         Log.d("ReportParser", "Parsing message: $message")
         
         val matchTanggal = regexTanggal.find(message)
-        val matchTHariIni = regexTHariIni.find(message)
+        var tanggal = matchTanggal?.groupValues?.getOrNull(1)?.trim()
         
-        if (matchTanggal == null || matchTHariIni == null) {
-            Log.d("ReportParser", "Failed to parse required fields (Tanggal / T_Hari_Ini)")
+        if (tanggal.isNullOrEmpty()) {
+            val fallbackMatch = Regex("(?i)(Senin|Selasa|Rabu|Kamis|Jumat|Sabtu|Minggu)[^\\n]*\\d+\\s+[a-zA-Z]+\\s+20\\d{2}").find(message)
+            tanggal = fallbackMatch?.value?.trim()
+        }
+        
+        if (tanggal.isNullOrEmpty()) {
+            Log.d("ReportParser", "Failed to parse required field (Tanggal)")
             return null
         }
-
-        val tanggal = matchTanggal.groupValues[1].trim()
-        val tHariIni = matchTHariIni.groupValues[1].toIntOrNull() ?: 0
 
         val pk = regexPK.find(message)?.groupValues?.get(1)?.toIntOrNull() ?: 0
         val ps = regexPS.find(message)?.groupValues?.get(1)?.toIntOrNull() ?: 0
         val pb1 = regexPB1.find(message)?.groupValues?.get(1)?.toIntOrNull() ?: 0
         val pb2 = regexPB2.find(message)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-
         val pb = pb1 + pb2
+
+        val matchTHariIni = regexTHariIni.find(message)
+        val tHariIni = matchTHariIni?.groupValues?.getOrNull(1)?.toIntOrNull() ?: (pk + ps + pb)
         
         val isYalimo = message.contains("elelim", ignoreCase = true) || message.contains("yalimo", ignoreCase = true)
 

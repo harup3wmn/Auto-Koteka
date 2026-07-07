@@ -31,7 +31,8 @@ class NotificationService : NotificationListenerService() {
         val text = extras.getCharSequence("android.text")?.toString() ?: ""
 
         if (text.contains("LAPORAN KEGIATAN PEKERJAAN TEAM ROW", ignoreCase = true) ||
-            text.contains("PEROLEHAN PENEBANGAN SEJUMLAH", ignoreCase = true)) {
+            text.contains("PEROLEHAN PENEBANGAN SEJUMLAH", ignoreCase = true) ||
+            text.contains("REALISASI PEKERJAAN ROW", ignoreCase = true)) {
             
             val postTime = sbn.postTime
             
