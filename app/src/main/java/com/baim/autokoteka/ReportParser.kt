@@ -136,7 +136,7 @@ object ReportParser {
             🎯 Tahunan: $totalUP3Tahun / $targetTahunan Pohon (${String.format("%.1f", pctTahun)}%)
 
             *Rincian per ULP*
-            1. Wamena Kota
+            1. Wamena Kota (PT Nusa Daya)
                Hari ini: $totalHariIniWamena | Bulan ini: $wamenaBulan | Tahun ini: $wamenaTahun
             2. Yalimo
                Hari ini: $totalHariIniYalimo | Bulan ini: $yalimoBulan | Tahun ini: $yalimoTahun
