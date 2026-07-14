@@ -50,10 +50,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        // Coba hidupkan ulang NotificationListenerService secara paksa jika mati setelah update APK
+        // Coba hidupkan ulang NotificationListenerService secara paksa jika mati setelah update APK atau di-kill system
         try {
             val componentName = android.content.ComponentName(this, NotificationService::class.java)
-            android.service.notification.NotificationListenerService.requestRebind(componentName)
+            val pm = packageManager
+            // Hack untuk merestart service listener
+            pm.setComponentEnabledSetting(
+                componentName,
+                android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+                android.content.pm.PackageManager.DONT_KILL_APP
+            )
+            pm.setComponentEnabledSetting(
+                componentName,
+                android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+                android.content.pm.PackageManager.DONT_KILL_APP
+            )
         } catch (e: Exception) {
             e.printStackTrace()
         }
@@ -283,46 +294,88 @@ fun PermissionCheckSection(context: Context) {
     val packageName = context.packageName
     val isGranted = enabledListeners != null && enabledListeners.contains(packageName)
 
-    if (!isGranted) {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+    val pm = context.getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+    val isIgnoringBattery = pm.isIgnoringBatteryOptimizations(packageName)
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        if (!isGranted) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Izin Notifikasi Belum Aktif",
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    style = MaterialTheme.typography.titleMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "Aplikasi butuh akses untuk membaca notifikasi WhatsApp.",
-                    color = MaterialTheme.colorScheme.onErrorContainer,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Button(
-                    onClick = {
-                        context.startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
-                    }
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Text("Buka Pengaturan")
+                    Text(
+                        text = "Izin Notifikasi Belum Aktif",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Aplikasi butuh akses untuk membaca notifikasi WhatsApp.",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            context.startActivity(Intent("android.settings.ACTION_NOTIFICATION_LISTENER_SETTINGS"))
+                        }
+                    ) {
+                        Text("Buka Pengaturan")
+                    }
                 }
             }
+        } else {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = "Izin Notifikasi Aktif ✓",
+                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.padding(16.dp)
+                )
+            }
         }
-    } else {
-        Card(
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text(
-                text = "Izin Notifikasi Aktif ✓",
-                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                modifier = Modifier.padding(16.dp)
-            )
+        
+        Spacer(modifier = Modifier.height(8.dp))
+
+        if (!isIgnoringBattery) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Awas Aplikasi Tertidur!",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Sistem HP Anda mungkin mematikan aplikasi secara diam-diam. Harap nonaktifkan optimalisasi baterai untuk aplikasi ini.",
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            val intent = Intent(android.provider.Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+                            intent.data = android.net.Uri.parse("package:$packageName")
+                            context.startActivity(intent)
+                        }
+                    ) {
+                        Text("Izinkan Berjalan Penuh")
+                    }
+                }
+            }
         }
     }
 }
