@@ -37,16 +37,18 @@ class NotificationService : NotificationListenerService() {
             val postTime = sbn.postTime
             
             // Cegah ghost/unread notifications: Cek apakah ID waktu ini sudah pernah diproses
-            if (processedPostTimes.contains(postTime)) {
-                return
-            }
-            
-            processedPostTimes.add(postTime)
-            // Jaga agar memory tidak bengkak (maksimal simpan 50 ID terakhir)
-            if (processedPostTimes.size > 50) {
-                val iterator = processedPostTimes.iterator()
-                iterator.next()
-                iterator.remove()
+            synchronized(processedPostTimes) {
+                if (processedPostTimes.contains(postTime)) {
+                    return
+                }
+                
+                processedPostTimes.add(postTime)
+                // Jaga agar memory tidak bengkak (maksimal simpan 50 ID terakhir)
+                if (processedPostTimes.size > 50) {
+                    val iterator = processedPostTimes.iterator()
+                    iterator.next()
+                    iterator.remove()
+                }
             }
 
             Log.d("NotificationService", "Pesan laporan terdeteksi: $text")
