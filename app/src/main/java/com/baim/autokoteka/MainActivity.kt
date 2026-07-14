@@ -99,6 +99,7 @@ fun AutoKotekaApp() {
     val logHistory by dataStoreManager.logHistoryFlow.collectAsState(initial = emptyList())
 
     var showEditDialog by remember { mutableStateOf(false) }
+    var manualInputText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -171,13 +172,77 @@ fun AutoKotekaApp() {
                 Text("Target", fontWeight = FontWeight.Bold)
                 Text("Bulanan: $targetBulanan | Tahunan: ${targetBulanan * 12}")
                 
-                
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(
                     onClick = { showEditDialog = true },
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("Edit Data Akumulasi")
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+        
+        // Input Manual Laporan
+        Card(modifier = Modifier.fillMaxWidth(), colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Proses Laporan Manual", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSecondaryContainer)
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = manualInputText,
+                    onValueChange = { manualInputText = it },
+                    label = { Text("Paste Laporan WA di sini") },
+                    modifier = Modifier.fillMaxWidth(),
+                    minLines = 4
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = {
+                        coroutineScope.launch {
+                            val parsedData = ReportParser.parseMessage(manualInputText)
+                            if (parsedData != null) {
+                                val latestRaw = dataStoreManager.latestRawTextFlow.first()
+                                val validation = ReportParser.validateReport(parsedData, manualInputText, latestRaw)
+                                
+                                val currentTime = System.currentTimeMillis()
+                                val entry = LogEntry(
+                                    id = currentTime,
+                                    timestamp = currentTime,
+                                    rawText = manualInputText,
+                                    isAnomaly = !validation.isValid,
+                                    anomalyReason = validation.reason,
+                                    status = if (validation.isValid) "PROCESSED" else "PENDING"
+                                )
+                                dataStoreManager.addLogEntry(entry)
+                                
+                                if (validation.isValid) {
+                                    dataStoreManager.setLatestRawText(manualInputText)
+                                    dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.isYalimo)
+                                    
+                                    val wb = dataStoreManager.wamenaBulanIniFlow.first()
+                                    val wt = dataStoreManager.wamenaTahunIniFlow.first()
+                                    val yb = dataStoreManager.yalimoBulanIniFlow.first()
+                                    val yt = dataStoreManager.yalimoTahunIniFlow.first()
+                                    val tb = dataStoreManager.targetBulananFlow.first()
+                                    
+                                    val finalReport = ReportParser.formatReport(parsedData, wb, wt, yb, yt, tb)
+                                    dataStoreManager.saveLatestReport(finalReport)
+                                    
+                                    Toast.makeText(context, "Berhasil Diproses!", Toast.LENGTH_SHORT).show()
+                                    manualInputText = ""
+                                } else {
+                                    Toast.makeText(context, "Terdeteksi Anomali. Cek Buku Log!", Toast.LENGTH_LONG).show()
+                                    manualInputText = ""
+                                }
+                            } else {
+                                Toast.makeText(context, "Format tidak dikenali!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Proses Manual")
                 }
             }
         }
