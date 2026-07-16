@@ -116,9 +116,18 @@ class DataStoreManager(private val context: Context) {
             val jsonString = preferences[LOG_HISTORY] ?: "[]"
             val list = parseLogHistory(jsonString).toMutableList()
             
-            // Hapus log yang umurnya lebih dari 7 hari
-            val sevenDaysAgo = System.currentTimeMillis() - (7L * 24 * 60 * 60 * 1000)
-            list.removeAll { it.timestamp < sevenDaysAgo }
+            // Hapus log: 3 hari untuk yang sudah direspon, 7 hari untuk yang masih pending
+            val currentTime = System.currentTimeMillis()
+            val threeDaysAgo = currentTime - (3L * 24 * 60 * 60 * 1000)
+            val sevenDaysAgo = currentTime - (7L * 24 * 60 * 60 * 1000)
+            
+            list.removeAll { entry ->
+                if (entry.status == "PENDING") {
+                    entry.timestamp < sevenDaysAgo
+                } else {
+                    entry.timestamp < threeDaysAgo
+                }
+            }
             
             list.add(entry)
             preferences[LOG_HISTORY] = serializeLogHistory(list)

@@ -61,9 +61,18 @@ class NotificationService : NotificationListenerService() {
 
     private fun processReport(message: String) {
         serviceScope.launch {
+            val dataStoreManager = DataStoreManager(applicationContext)
+            
+            // Cek jumlah pesan yang 100% sama (Anti-Spam)
+            val logHistory = dataStoreManager.logHistoryFlow.first()
+            val exactMatchCount = logHistory.count { it.rawText.trim() == message.trim() }
+            if (exactMatchCount >= 2) {
+                Log.d("NotificationService", "Pesan adalah spam duplikat ke-${exactMatchCount+1}, otomatis dibuang.")
+                return@launch
+            }
+
             val parsedData = ReportParser.parseMessage(message)
             if (parsedData != null) {
-                val dataStoreManager = DataStoreManager(applicationContext)
                 
                 val latestRawText = dataStoreManager.latestRawTextFlow.first()
                 val validation = ReportParser.validateReport(parsedData, message, latestRawText)

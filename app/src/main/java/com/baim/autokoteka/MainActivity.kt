@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -83,6 +84,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AutoKotekaApp() {
     val context = LocalContext.current
@@ -100,6 +102,7 @@ fun AutoKotekaApp() {
 
     var showEditDialog by remember { mutableStateOf(false) }
     var manualInputText by remember { mutableStateOf("") }
+    var logFilter by remember { mutableStateOf("Semua") }
 
     Column(
         modifier = Modifier
@@ -250,16 +253,46 @@ fun AutoKotekaApp() {
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "Buku Log (7 Hari Terakhir)",
+            text = "Buku Log (Otomatis Hapus 3 Hari)",
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.align(Alignment.Start)
         )
         Spacer(modifier = Modifier.height(8.dp))
+        
+        Row(
+            modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            FilterChip(
+                selected = logFilter == "Semua",
+                onClick = { logFilter = "Semua" },
+                label = { Text("Semua") }
+            )
+            FilterChip(
+                selected = logFilter == "Menunggu",
+                onClick = { logFilter = "Menunggu" },
+                label = { Text("Menunggu Respon") }
+            )
+            FilterChip(
+                selected = logFilter == "Selesai",
+                onClick = { logFilter = "Selesai" },
+                label = { Text("Selesai") }
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
 
-        if (logHistory.isEmpty()) {
+        val filteredLogs = logHistory.filter { entry ->
+            when (logFilter) {
+                "Menunggu" -> entry.status == "PENDING"
+                "Selesai" -> entry.status != "PENDING"
+                else -> true
+            }
+        }
+
+        if (filteredLogs.isEmpty()) {
             Text("Belum ada riwayat laporan.", style = MaterialTheme.typography.bodyMedium)
         } else {
-            logHistory.forEach { entry ->
+            filteredLogs.forEach { entry ->
                 LogEntryCard(
                     entry = entry, 
                     dataStoreManager = dataStoreManager, 
@@ -546,6 +579,18 @@ fun LogEntryCard(
                                 modifier = Modifier.weight(1f)
                             ) {
                                 Text("Tambahkan Baru", style = MaterialTheme.typography.labelSmall)
+                            }
+                            Button(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        dataStoreManager.updateLogStatus(entry.id, "REJECTED")
+                                        Toast.makeText(context, "Laporan Ditolak!", Toast.LENGTH_SHORT).show()
+                                    }
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                            ) {
+                                Text("Tolak", style = MaterialTheme.typography.labelSmall)
                             }
                         }
                         Button(
