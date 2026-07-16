@@ -43,17 +43,17 @@ class DataStoreManager(private val context: Context) {
     }
 
     val wamenaBulanIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[WAMENA_BULAN_INI] ?: 21
+        preferences[WAMENA_BULAN_INI] ?: 39
     }
     val wamenaTahunIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[WAMENA_TAHUN_INI] ?: 294
+        preferences[WAMENA_TAHUN_INI] ?: 389
     }
 
     val yalimoBulanIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[YALIMO_BULAN_INI] ?: 0
+        preferences[YALIMO_BULAN_INI] ?: 12
     }
     val yalimoTahunIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
-        preferences[YALIMO_TAHUN_INI] ?: 0
+        preferences[YALIMO_TAHUN_INI] ?: 12
     }
 
     val targetBulananFlow: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -199,13 +199,13 @@ class DataStoreManager(private val context: Context) {
             preferences[LAST_SAVED_YEAR] = currentYear
 
             if (isYalimo) {
-                val currentBulan = preferences[YALIMO_BULAN_INI] ?: 0
-                val currentTahun = preferences[YALIMO_TAHUN_INI] ?: 0
+                val currentBulan = preferences[YALIMO_BULAN_INI] ?: 12
+                val currentTahun = preferences[YALIMO_TAHUN_INI] ?: 12
                 preferences[YALIMO_BULAN_INI] = currentBulan + amount
                 preferences[YALIMO_TAHUN_INI] = currentTahun + amount
             } else {
-                val currentBulan = preferences[WAMENA_BULAN_INI] ?: 21
-                val currentTahun = preferences[WAMENA_TAHUN_INI] ?: 294
+                val currentBulan = preferences[WAMENA_BULAN_INI] ?: 39
+                val currentTahun = preferences[WAMENA_TAHUN_INI] ?: 389
                 preferences[WAMENA_BULAN_INI] = currentBulan + amount
                 preferences[WAMENA_TAHUN_INI] = currentTahun + amount
             }
@@ -215,13 +215,13 @@ class DataStoreManager(private val context: Context) {
     suspend fun subtractAccumulation(amount: Int, isYalimo: Boolean) {
         context.dataStore.edit { preferences ->
             if (isYalimo) {
-                val currentBulan = preferences[YALIMO_BULAN_INI] ?: 0
-                val currentTahun = preferences[YALIMO_TAHUN_INI] ?: 0
+                val currentBulan = preferences[YALIMO_BULAN_INI] ?: 12
+                val currentTahun = preferences[YALIMO_TAHUN_INI] ?: 12
                 preferences[YALIMO_BULAN_INI] = (currentBulan - amount).coerceAtLeast(0)
                 preferences[YALIMO_TAHUN_INI] = (currentTahun - amount).coerceAtLeast(0)
             } else {
-                val currentBulan = preferences[WAMENA_BULAN_INI] ?: 21
-                val currentTahun = preferences[WAMENA_TAHUN_INI] ?: 294
+                val currentBulan = preferences[WAMENA_BULAN_INI] ?: 39
+                val currentTahun = preferences[WAMENA_TAHUN_INI] ?: 389
                 preferences[WAMENA_BULAN_INI] = (currentBulan - amount).coerceAtLeast(0)
                 preferences[WAMENA_TAHUN_INI] = (currentTahun - amount).coerceAtLeast(0)
             }
