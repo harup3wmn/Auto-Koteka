@@ -109,6 +109,9 @@ object ReportParser {
         yalimoHari: Int,
         yalimoBulan: Int,
         yalimoTahun: Int,
+        pkHari: Int,
+        psHari: Int,
+        pbHari: Int,
         targetBulanan: Int
     ): String {
         
@@ -129,7 +132,7 @@ object ReportParser {
             📅 Tanggal: ${data.tanggal}
 
             *Total Pencapaian UP3 Wamena*
-            • Hari ini: $totalUP3HariIni Pohon (PK:${data.pk}, PS:${data.ps}, PB:${data.pb})
+            • Hari ini: $totalUP3HariIni Pohon (PK:$pkHari, PS:$psHari, PB:$pbHari)
             • Bulan ini: $totalUP3Bulan Pohon
             • Tahun ini: $totalUP3Tahun Pohon
 

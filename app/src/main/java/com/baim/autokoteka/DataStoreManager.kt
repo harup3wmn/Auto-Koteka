@@ -44,6 +44,10 @@ class DataStoreManager(private val context: Context) {
         
         val WAMENA_HARI_INI = intPreferencesKey("wamena_hari_ini")
         val YALIMO_HARI_INI = intPreferencesKey("yalimo_hari_ini")
+        
+        val PK_HARI_INI = intPreferencesKey("pk_hari_ini")
+        val PS_HARI_INI = intPreferencesKey("ps_hari_ini")
+        val PB_HARI_INI = intPreferencesKey("pb_hari_ini")
     }
 
     val wamenaBulanIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -66,6 +70,18 @@ class DataStoreManager(private val context: Context) {
     
     val yalimoHariIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[YALIMO_HARI_INI] ?: 0
+    }
+
+    val pkHariIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[PK_HARI_INI] ?: 0
+    }
+    
+    val psHariIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[PS_HARI_INI] ?: 0
+    }
+    
+    val pbHariIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[PB_HARI_INI] ?: 0
     }
 
     val targetBulananFlow: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -185,7 +201,7 @@ class DataStoreManager(private val context: Context) {
         }
     }
 
-    suspend fun addAccumulation(amount: Int, isYalimo: Boolean) {
+    suspend fun addAccumulation(amount: Int, pk: Int, ps: Int, pb: Int, isYalimo: Boolean) {
         context.dataStore.edit { preferences ->
             val calendar = Calendar.getInstance()
             val currentDay = calendar.get(Calendar.DAY_OF_YEAR)
@@ -201,6 +217,9 @@ class DataStoreManager(private val context: Context) {
                 // Reset harian
                 preferences[WAMENA_HARI_INI] = 0
                 preferences[YALIMO_HARI_INI] = 0
+                preferences[PK_HARI_INI] = 0
+                preferences[PS_HARI_INI] = 0
+                preferences[PB_HARI_INI] = 0
             }
 
             if (currentYear > lastSavedYear || (currentYear == lastSavedYear && currentMonth > lastSavedMonth)) {
@@ -234,10 +253,19 @@ class DataStoreManager(private val context: Context) {
                 preferences[WAMENA_BULAN_INI] = currentBulan + amount
                 preferences[WAMENA_TAHUN_INI] = currentTahun + amount
             }
+
+            // Tambahkan rincian harian (berlaku untuk semua ULP)
+            val currentPK = preferences[PK_HARI_INI] ?: 0
+            val currentPS = preferences[PS_HARI_INI] ?: 0
+            val currentPB = preferences[PB_HARI_INI] ?: 0
+            
+            preferences[PK_HARI_INI] = currentPK + pk
+            preferences[PS_HARI_INI] = currentPS + ps
+            preferences[PB_HARI_INI] = currentPB + pb
         }
     }
 
-    suspend fun subtractAccumulation(amount: Int, isYalimo: Boolean) {
+    suspend fun subtractAccumulation(amount: Int, pk: Int, ps: Int, pb: Int, isYalimo: Boolean) {
         context.dataStore.edit { preferences ->
             if (isYalimo) {
                 val currentHari = preferences[YALIMO_HARI_INI] ?: 0
@@ -254,6 +282,15 @@ class DataStoreManager(private val context: Context) {
                 preferences[WAMENA_BULAN_INI] = (currentBulan - amount).coerceAtLeast(0)
                 preferences[WAMENA_TAHUN_INI] = (currentTahun - amount).coerceAtLeast(0)
             }
+
+            // Kurangi rincian harian
+            val currentPK = preferences[PK_HARI_INI] ?: 0
+            val currentPS = preferences[PS_HARI_INI] ?: 0
+            val currentPB = preferences[PB_HARI_INI] ?: 0
+            
+            preferences[PK_HARI_INI] = (currentPK - pk).coerceAtLeast(0)
+            preferences[PS_HARI_INI] = (currentPS - ps).coerceAtLeast(0)
+            preferences[PB_HARI_INI] = (currentPB - pb).coerceAtLeast(0)
         }
     }
 

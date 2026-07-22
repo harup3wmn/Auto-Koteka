@@ -221,7 +221,7 @@ fun AutoKotekaApp() {
                                 
                                 if (validation.isValid) {
                                     dataStoreManager.setLatestRawText(manualInputText)
-                                    dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.isYalimo)
+                                    dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.pk, parsedData.ps, parsedData.pb, parsedData.isYalimo)
                                     
                                     val wh = dataStoreManager.wamenaHariIniFlow.first()
                                     val wb = dataStoreManager.wamenaBulanIniFlow.first()
@@ -229,9 +229,12 @@ fun AutoKotekaApp() {
                                     val yh = dataStoreManager.yalimoHariIniFlow.first()
                                     val yb = dataStoreManager.yalimoBulanIniFlow.first()
                                     val yt = dataStoreManager.yalimoTahunIniFlow.first()
+                                    val pkHari = dataStoreManager.pkHariIniFlow.first()
+                                    val psHari = dataStoreManager.psHariIniFlow.first()
+                                    val pbHari = dataStoreManager.pbHariIniFlow.first()
                                     val tb = dataStoreManager.targetBulananFlow.first()
                                     
-                                    val finalReport = ReportParser.formatReport(parsedData, wh, wb, wt, yh, yb, yt, tb)
+                                    val finalReport = ReportParser.formatReport(parsedData, wh, wb, wt, yh, yb, yt, pkHari, psHari, pbHari, tb)
                                     dataStoreManager.saveLatestReport(finalReport)
                                     
                                     Toast.makeText(context, "Berhasil Diproses!", Toast.LENGTH_SHORT).show()
@@ -533,8 +536,8 @@ fun LogEntryCard(
                                         val oldParsedData = ReportParser.parseMessage(latestRawText)
                                         
                                         if (parsedData != null && oldParsedData != null) {
-                                            dataStoreManager.subtractAccumulation(oldParsedData.tHariIni, oldParsedData.isYalimo)
-                                            dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.isYalimo)
+                                            dataStoreManager.subtractAccumulation(oldParsedData.tHariIni, oldParsedData.pk, oldParsedData.ps, oldParsedData.pb, oldParsedData.isYalimo)
+                                            dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.pk, parsedData.ps, parsedData.pb, parsedData.isYalimo)
                                             dataStoreManager.setLatestRawText(entry.rawText)
                                             
                                             val wamenaHari = dataStoreManager.wamenaHariIniFlow.first()
@@ -543,10 +546,13 @@ fun LogEntryCard(
                                             val yalimoHari = dataStoreManager.yalimoHariIniFlow.first()
                                             val yalimoBulan = dataStoreManager.yalimoBulanIniFlow.first()
                                             val yalimoTahun = dataStoreManager.yalimoTahunIniFlow.first()
+                                            val pkHari = dataStoreManager.pkHariIniFlow.first()
+                                            val psHari = dataStoreManager.psHariIniFlow.first()
+                                            val pbHari = dataStoreManager.pbHariIniFlow.first()
                                             val targetBln = dataStoreManager.targetBulananFlow.first()
                                             
                                             val finalReport = ReportParser.formatReport(
-                                                parsedData, wamenaHari, wamenaBulan, wamenaTahun, yalimoHari, yalimoBulan, yalimoTahun, targetBln
+                                                parsedData, wamenaHari, wamenaBulan, wamenaTahun, yalimoHari, yalimoBulan, yalimoTahun, pkHari, psHari, pbHari, targetBln
                                             )
                                             dataStoreManager.saveLatestReport(finalReport)
                                         }
@@ -564,7 +570,7 @@ fun LogEntryCard(
                                         val parsedData = ReportParser.parseMessage(entry.rawText)
                                         if (parsedData != null) {
                                             dataStoreManager.setLatestRawText(entry.rawText)
-                                            dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.isYalimo)
+                                            dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.pk, parsedData.ps, parsedData.pb, parsedData.isYalimo)
                                             
                                             val wamenaHari = dataStoreManager.wamenaHariIniFlow.first()
                                             val wamenaBulan = dataStoreManager.wamenaBulanIniFlow.first()
@@ -572,10 +578,13 @@ fun LogEntryCard(
                                             val yalimoHari = dataStoreManager.yalimoHariIniFlow.first()
                                             val yalimoBulan = dataStoreManager.yalimoBulanIniFlow.first()
                                             val yalimoTahun = dataStoreManager.yalimoTahunIniFlow.first()
+                                            val pkHari = dataStoreManager.pkHariIniFlow.first()
+                                            val psHari = dataStoreManager.psHariIniFlow.first()
+                                            val pbHari = dataStoreManager.pbHariIniFlow.first()
                                             val targetBln = dataStoreManager.targetBulananFlow.first()
                                             
                                             val finalReport = ReportParser.formatReport(
-                                                parsedData, wamenaHari, wamenaBulan, wamenaTahun, yalimoHari, yalimoBulan, yalimoTahun, targetBln
+                                                parsedData, wamenaHari, wamenaBulan, wamenaTahun, yalimoHari, yalimoBulan, yalimoTahun, pkHari, psHari, pbHari, targetBln
                                             )
                                             dataStoreManager.saveLatestReport(finalReport)
                                         }
@@ -633,7 +642,7 @@ fun LogEntryCard(
                                     val parsedData = ReportParser.parseMessage(entry.rawText)
                                     if (parsedData != null) {
                                         dataStoreManager.setLatestRawText(entry.rawText)
-                                        dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.isYalimo)
+                                        dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.pk, parsedData.ps, parsedData.pb, parsedData.isYalimo)
                                         
                                         val wamenaHari = dataStoreManager.wamenaHariIniFlow.first()
                                         val wamenaBulan = dataStoreManager.wamenaBulanIniFlow.first()
@@ -641,10 +650,13 @@ fun LogEntryCard(
                                         val yalimoHari = dataStoreManager.yalimoHariIniFlow.first()
                                         val yalimoBulan = dataStoreManager.yalimoBulanIniFlow.first()
                                         val yalimoTahun = dataStoreManager.yalimoTahunIniFlow.first()
+                                        val pkHari = dataStoreManager.pkHariIniFlow.first()
+                                        val psHari = dataStoreManager.psHariIniFlow.first()
+                                        val pbHari = dataStoreManager.pbHariIniFlow.first()
                                         val targetBln = dataStoreManager.targetBulananFlow.first()
                                         
                                         val finalReport = ReportParser.formatReport(
-                                            parsedData, wamenaHari, wamenaBulan, wamenaTahun, yalimoHari, yalimoBulan, yalimoTahun, targetBln
+                                            parsedData, wamenaHari, wamenaBulan, wamenaTahun, yalimoHari, yalimoBulan, yalimoTahun, pkHari, psHari, pbHari, targetBln
                                         )
                                         dataStoreManager.saveLatestReport(finalReport)
                                     }
