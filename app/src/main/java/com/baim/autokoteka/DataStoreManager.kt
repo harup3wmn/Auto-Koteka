@@ -40,6 +40,10 @@ class DataStoreManager(private val context: Context) {
         
         val LAST_SAVED_MONTH = intPreferencesKey("last_saved_month")
         val LAST_SAVED_YEAR = intPreferencesKey("last_saved_year")
+        val LAST_SAVED_DAY = intPreferencesKey("last_saved_day")
+        
+        val WAMENA_HARI_INI = intPreferencesKey("wamena_hari_ini")
+        val YALIMO_HARI_INI = intPreferencesKey("yalimo_hari_ini")
     }
 
     val wamenaBulanIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -54,6 +58,14 @@ class DataStoreManager(private val context: Context) {
     }
     val yalimoTahunIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
         preferences[YALIMO_TAHUN_INI] ?: 12
+    }
+
+    val wamenaHariIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[WAMENA_HARI_INI] ?: 0
+    }
+    
+    val yalimoHariIniFlow: Flow<Int> = context.dataStore.data.map { preferences ->
+        preferences[YALIMO_HARI_INI] ?: 0
     }
 
     val targetBulananFlow: Flow<Int> = context.dataStore.data.map { preferences ->
@@ -176,13 +188,21 @@ class DataStoreManager(private val context: Context) {
     suspend fun addAccumulation(amount: Int, isYalimo: Boolean) {
         context.dataStore.edit { preferences ->
             val calendar = Calendar.getInstance()
+            val currentDay = calendar.get(Calendar.DAY_OF_YEAR)
             val currentMonth = calendar.get(Calendar.MONTH)
             val currentYear = calendar.get(Calendar.YEAR)
             
+            val lastSavedDay = preferences[LAST_SAVED_DAY] ?: currentDay
             val lastSavedMonth = preferences[LAST_SAVED_MONTH] ?: currentMonth
             val lastSavedYear = preferences[LAST_SAVED_YEAR] ?: currentYear
             
             // Logika Reset Otomatis
+            if (currentYear > lastSavedYear || (currentYear == lastSavedYear && currentDay > lastSavedDay)) {
+                // Reset harian
+                preferences[WAMENA_HARI_INI] = 0
+                preferences[YALIMO_HARI_INI] = 0
+            }
+
             if (currentYear > lastSavedYear || (currentYear == lastSavedYear && currentMonth > lastSavedMonth)) {
                 // Reset bulanan
                 preferences[WAMENA_BULAN_INI] = 0
@@ -195,17 +215,22 @@ class DataStoreManager(private val context: Context) {
                 }
             }
             
+            preferences[LAST_SAVED_DAY] = currentDay
             preferences[LAST_SAVED_MONTH] = currentMonth
             preferences[LAST_SAVED_YEAR] = currentYear
 
             if (isYalimo) {
+                val currentHari = preferences[YALIMO_HARI_INI] ?: 0
                 val currentBulan = preferences[YALIMO_BULAN_INI] ?: 12
                 val currentTahun = preferences[YALIMO_TAHUN_INI] ?: 12
+                preferences[YALIMO_HARI_INI] = currentHari + amount
                 preferences[YALIMO_BULAN_INI] = currentBulan + amount
                 preferences[YALIMO_TAHUN_INI] = currentTahun + amount
             } else {
+                val currentHari = preferences[WAMENA_HARI_INI] ?: 0
                 val currentBulan = preferences[WAMENA_BULAN_INI] ?: 39
                 val currentTahun = preferences[WAMENA_TAHUN_INI] ?: 389
+                preferences[WAMENA_HARI_INI] = currentHari + amount
                 preferences[WAMENA_BULAN_INI] = currentBulan + amount
                 preferences[WAMENA_TAHUN_INI] = currentTahun + amount
             }
@@ -215,13 +240,17 @@ class DataStoreManager(private val context: Context) {
     suspend fun subtractAccumulation(amount: Int, isYalimo: Boolean) {
         context.dataStore.edit { preferences ->
             if (isYalimo) {
+                val currentHari = preferences[YALIMO_HARI_INI] ?: 0
                 val currentBulan = preferences[YALIMO_BULAN_INI] ?: 12
                 val currentTahun = preferences[YALIMO_TAHUN_INI] ?: 12
+                preferences[YALIMO_HARI_INI] = (currentHari - amount).coerceAtLeast(0)
                 preferences[YALIMO_BULAN_INI] = (currentBulan - amount).coerceAtLeast(0)
                 preferences[YALIMO_TAHUN_INI] = (currentTahun - amount).coerceAtLeast(0)
             } else {
+                val currentHari = preferences[WAMENA_HARI_INI] ?: 0
                 val currentBulan = preferences[WAMENA_BULAN_INI] ?: 39
                 val currentTahun = preferences[WAMENA_TAHUN_INI] ?: 389
+                preferences[WAMENA_HARI_INI] = (currentHari - amount).coerceAtLeast(0)
                 preferences[WAMENA_BULAN_INI] = (currentBulan - amount).coerceAtLeast(0)
                 preferences[WAMENA_TAHUN_INI] = (currentTahun - amount).coerceAtLeast(0)
             }

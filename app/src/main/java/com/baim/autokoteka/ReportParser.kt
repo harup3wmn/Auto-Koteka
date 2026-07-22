@@ -103,8 +103,10 @@ object ReportParser {
 
     fun formatReport(
         data: ParsedData, 
+        wamenaHari: Int,
         wamenaBulan: Int, 
         wamenaTahun: Int,
+        yalimoHari: Int,
         yalimoBulan: Int,
         yalimoTahun: Int,
         targetBulanan: Int
@@ -114,9 +116,9 @@ object ReportParser {
         val totalUP3Bulan = wamenaBulan + yalimoBulan
         val totalUP3Tahun = wamenaTahun + yalimoTahun
         
-        val totalHariIniWamena = if (!data.isYalimo) data.tHariIni else 0
-        val totalHariIniYalimo = if (data.isYalimo) data.tHariIni else 0
-        val totalUP3HariIni = totalHariIniWamena + totalHariIniYalimo
+        val totalHariIniWamena = wamenaHari
+        val totalHariIniYalimo = yalimoHari
+        val totalUP3HariIni = wamenaHari + yalimoHari
         
         val targetTahunan = targetBulanan * 12
         val pctBulan = if (targetBulanan > 0) (totalUP3Bulan.toDouble() / targetBulanan) * 100 else 0.0

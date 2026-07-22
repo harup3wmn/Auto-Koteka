@@ -79,51 +79,16 @@ class NotificationService : NotificationListenerService() {
 
                 val currentTime = System.currentTimeMillis()
 
-                if (!validation.isValid) {
-                    // Masukkan ke karantina log
-                    val entry = LogEntry(
-                        id = currentTime,
-                        timestamp = currentTime,
-                        rawText = message,
-                        isAnomaly = true,
-                        anomalyReason = validation.reason,
-                        status = "PENDING"
-                    )
-                    dataStoreManager.addLogEntry(entry)
-                    showWarningNotification()
-                    return@launch
-                }
-                
-                // Lulus Validasi -> Eksekusi normal
-                val normalEntry = LogEntry(
+                val entry = LogEntry(
                     id = currentTime,
                     timestamp = currentTime,
                     rawText = message,
-                    isAnomaly = false,
-                    anomalyReason = "",
-                    status = "PROCESSED"
+                    isAnomaly = !validation.isValid,
+                    anomalyReason = if (validation.isValid) "Menunggu Persetujuan" else validation.reason,
+                    status = "PENDING"
                 )
-                dataStoreManager.addLogEntry(normalEntry)
-                dataStoreManager.setLatestRawText(message)
-                dataStoreManager.addAccumulation(parsedData.tHariIni, parsedData.isYalimo)
-
-                // Ambil nilai terbaru untuk ke-4 keranjang
-                val wamenaBulan = dataStoreManager.wamenaBulanIniFlow.first()
-                val wamenaTahun = dataStoreManager.wamenaTahunIniFlow.first()
-                val yalimoBulan = dataStoreManager.yalimoBulanIniFlow.first()
-                val yalimoTahun = dataStoreManager.yalimoTahunIniFlow.first()
-                val targetBulanan = dataStoreManager.targetBulananFlow.first()
-
-                // Buat format report final
-                val finalReport = ReportParser.formatReport(
-                    parsedData, 
-                    wamenaBulan, wamenaTahun, 
-                    yalimoBulan, yalimoTahun,
-                    targetBulanan
-                )
-                
-                dataStoreManager.saveLatestReport(finalReport)
-                showCopyNotification(finalReport)
+                dataStoreManager.addLogEntry(entry)
+                showWarningNotification() // Selalu tampilkan notifikasi agar user membuka aplikasi
             }
         }
     }
