@@ -7,9 +7,9 @@ object ReportParser {
     private val regexTanggal = Regex("(?i)(?:hari|tanggal|𝙃𝘼𝙍𝙄|𝙏𝘼𝙉𝙂𝙂𝘼𝙇)[^\\n]*?[=:]\\s*([^\\n]+)")
     private val regexTHariIni = Regex("(?i)(?:perolehan|total|jumlah)\\s+penebangan[^\\n]*?[=:]?[ \\t]*(\\d+)")
     private val regexPK = Regex("(?i)(?:1\\.[^\\n]*?5\\s*-\\s*20|pohon\\s+kecil)[^\\n]*?[=:]?[ \\t]*(\\d+)")
-    private val regexPS = Regex("(?i)(?:2\\.[^\\n]*?20\\s*-\\s*30|pohon\\s+sedang)[^\\n]*?[=:]?[ \\t]*(\\d+)")
-    private val regexPB1 = Regex("(?i)(?:3\\.[^\\n]*?30\\s*-\\s*50|pohon\\s+besar)[^\\n]*?[=:]?[ \\t]*(\\d+)")
-    private val regexPB2 = Regex("(?i)4\\.[^\\n]*?50\\s*>[^\\n]*?[=:]?[ \\t]*(\\d+)")
+    private val regexPS1 = Regex("(?i)(?:2\\.[^\\n]*?20\\s*-\\s*30|pohon\\s+sedang)[^\\n]*?[=:]?[ \\t]*(\\d+)")
+    private val regexPS2 = Regex("(?i)3\\.[^\\n]*?30\\s*-\\s*50[^\\n]*?[=:]?[ \\t]*(\\d+)")
+    private val regexPB = Regex("(?i)(?:4\\.[^\\n]*?50\\s*>|pohon\\s+besar)[^\\n]*?[=:]?[ \\t]*(\\d+)")
 
     data class ParsedData(
         val isYalimo: Boolean,
@@ -37,10 +37,10 @@ object ReportParser {
         }
 
         val pk = regexPK.find(message)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-        val ps = regexPS.find(message)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-        val pb1 = regexPB1.find(message)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-        val pb2 = regexPB2.find(message)?.groupValues?.get(1)?.toIntOrNull() ?: 0
-        val pb = pb1 + pb2
+        val ps1 = regexPS1.find(message)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+        val ps2 = regexPS2.find(message)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+        val pb = regexPB.find(message)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+        val ps = ps1 + ps2
 
         val matchTHariIni = regexTHariIni.find(message)
         val tHariIni = matchTHariIni?.groupValues?.getOrNull(1)?.toIntOrNull() ?: (pk + ps + pb)
